@@ -14,6 +14,8 @@ class IncorrectSyntax(Exception):
 
 ###Functions to construct non-terminals###
 def parse_factor(toks):
+    if len(toks)==0:
+        raise IncorrectSyntax("Expected factor, but input is empty", '')
     tok = toks.pop(0)
     if tok.isalpha():   # identifier
         return Node(type="id", val=tok)
@@ -21,15 +23,21 @@ def parse_factor(toks):
         while len(toks)>0 and toks[0].isdigit():
             tok = list(tok)         # change token into mutable type
             tok.append(toks.pop(0)) # make token multiple-digit number
-        return Node(type="num", val=''.join(tok))   # save token value into a string type
+        return Node(type="num", val=str(int(''.join(tok))))   # save token value into a string type
     else:               # invalid character, such as operator
         raise IncorrectSyntax("Expected identifier or number", tok)
 
 def parse_term(toks):
     factor = parse_factor(toks)
-    if len(toks)>0 and (toks[0]=='*' or toks[0]=='/'):  # one lookahead
-        tok = toks.pop(0)
-        return Node(type='op', val=tok, left=factor, right=parse_term(toks))
+    if len(toks)>0:
+        tok = toks[0]               # one lookahead
+        if tok=='*' or tok=='/':
+            tok = toks.pop(0)
+            return Node(type='op', val=tok, left=factor, right=parse_term(toks))
+        elif tok=='+' or tok=='-':  # continue parsing expression
+            return factor
+        else:
+            raise IncorrectSyntax("Expected operation after factor", tok)
     else:
         return factor
 
