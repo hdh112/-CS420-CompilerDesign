@@ -1,10 +1,34 @@
 ###Build a tree node###
 class Node(object):
-    def __init__(self, typ, val=None, left=None, right=None):
-        self.type=typ
+    def __init__(self, typ, val, left=None, right=None):
+        self.typ=typ
         self.val=val
         self.left=left
         self.right=right
+
+    def getType(self):
+        return self.typ
+
+    def setType(self, newtyp):
+        self.typ=newtyp
+
+    def getVal(self):
+        return self.val
+
+    def setVal(self, newval):
+        self.val=newval
+
+    def getLeft(self):
+        return self.left
+
+    def setLeft(self, newleft):
+        self.left=newleft
+
+    def getRight(self):
+        return self.right
+
+    def setRight(self, newright):
+        self.right=newright
 
 ###Detect incorrect syntax###
 class IncorrectSyntax(Exception):
@@ -40,14 +64,14 @@ def parse_term_prime(toks):
 
         if tok=='*' or tok=='/':
             tok = toks.pop(0)
-            return Node(typ='op', val=tok, right=parse_term(toks))
+            return Node(typ="op", val=tok, right=parse_term(toks))
 
 def parse_term(toks):
     factor = parse_factor(toks)
     term_prime = parse_term_prime(toks)
-    if term_prime is None:
+    if term_prime == None:
         return factor
-    term_prime.left = factor  # push subtree <factor>
+    term_prime.setLeft(factor)  # push subtree <factor>
     return term_prime
 
 def parse_expr_prime(toks):
@@ -55,20 +79,20 @@ def parse_expr_prime(toks):
         tok = toks[0]       # one lookahead
         if tok.isspace():   # white space; continue to next token
             toks.pop(0)
-            tok = toks[0]   # guaranteed that there is next token, because of tokenize function
+            tok = toks[0]   # guaranteed that there is next token; refer to 'tokenize' function for reason
 
         if tok=='+' or tok=='-':
             tok = toks.pop(0)
-            return Node(typ='op', val=tok, right=parse_expr(toks))
+            return Node(typ="op", val=tok, right=parse_expr(toks))
         else:
             raise IncorrectSyntax("Expected addition/subtraction after term", tok)
 
 def parse_expr(toks):
     term = parse_term(toks)
     expr_prime = parse_expr_prime(toks)
-    if expr_prime is None:
+    if expr_prime == None:
         return term
-    expr_prime.left = term  # push subtree <term>
+    expr_prime.setLeft(term)  # push subtree <term>
     return expr_prime
 ##########################################
 
@@ -94,7 +118,7 @@ def merge(str1, str2, str3):
 def pre_order(root):
     if root == None:
         return ''
-    return merge(root.val, pre_order(root.left), pre_order(root.right))
+    return merge(root.getVal(), pre_order(root.getLeft()), pre_order(root.getRight()))
 
 def main():
     # Read input file
