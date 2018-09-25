@@ -12,14 +12,18 @@ class IncorrectSyntax(Exception):
         self.msg=msg
         self.tok=tok
 
+
 ###Functions to construct non-terminals###
 def parse_factor(toks):
     if len(toks)==0:
         raise IncorrectSyntax("Expected factor, but input is empty", '')
+
     tok = toks.pop(0)
-    if tok.isalpha():   # identifier
+    if tok.isspace():       # white space; continue to next token
+        return parse_factor(toks)
+    elif tok.isalpha():     # identifier
         return Node(type="id", val=tok)
-    elif tok.isdigit(): # number
+    elif tok.isdigit():     # number
         while len(toks)>0 and toks[0].isdigit():
             tok = list(tok)         # change token into mutable type
             tok.append(toks.pop(0)) # make token multiple-digit number
@@ -31,6 +35,10 @@ def parse_term(toks):
     factor = parse_factor(toks)
     if len(toks)>0:
         tok = toks[0]               # one lookahead
+        if tok.isspace():           # white space; continue to next token
+            toks.pop(0)
+            tok = toks[0]
+
         if tok=='*' or tok=='/':
             tok = toks.pop(0)
             return Node(type='op', val=tok, left=factor, right=parse_term(toks))
@@ -43,17 +51,23 @@ def parse_term(toks):
 
 def parse_expr(toks):
     term = parse_term(toks)
-    if len(toks)>0 and (toks[0]=='+' or toks[0]=='-'):  # one lookahead
-        tok = toks.pop(0)
-        return Node(type='op', val=tok, left=term, right=parse_expr(toks))
+    if len(toks)>0:
+        tok = toks[0]               # one lookahead
+        if tok.isspace():           # white space; continue to next token
+            toks.pop(0)
+            tok = toks[0]
+
+        if tok=='+' or tok=='-':  # one lookahead
+            tok = toks.pop(0)
+            return Node(type='op', val=tok, left=term, right=parse_expr(toks))
     else:
         return term
 ##########################################
 
-'''Helper function to eliminate white space in input string line
+'''Helper function to replace white space with a single space in input string line
                     & change into mutable data type(list)'''
 def tokenize(str_line):
-    return list(str_line.rstrip().replace(" ",""))
+    return list(' '.join(str_line.strip().split()))
 
 '''Parse the given input string line'''
 def parser(str_line):
