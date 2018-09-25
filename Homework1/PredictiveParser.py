@@ -1,7 +1,7 @@
 ###Build a tree node###
 class Node(object):
-    def __init__(self, type, val=None, left=None, right=None):
-        self.type=type
+    def __init__(self, typ, val=None, left=None, right=None):
+        self.type=typ
         self.val=val
         self.left=left
         self.right=right
@@ -22,51 +22,60 @@ def parse_factor(toks):
     if tok.isspace():       # white space; continue to next token
         return parse_factor(toks)
     elif tok.isalpha():     # identifier
-        return Node(type="id", val=tok)
+        return Node(typ="id", val=tok)
     elif tok.isdigit():     # number
         while len(toks)>0 and toks[0].isdigit():
             tok = list(tok)         # change token into mutable type
             tok.append(toks.pop(0)) # make token multiple-digit number
-        return Node(type="num", val=str(int(''.join(tok))))   # save token value into a string type
+        return Node(typ="num", val=str(int(''.join(tok))))   # save token value into a string type
     else:               # invalid character, such as operator
         raise IncorrectSyntax("Expected identifier or number", tok)
 
-def parse_term(toks):
-    factor = parse_factor(toks)
+def parse_term_prime(toks):
     if len(toks)>0:
-        tok = toks[0]               # one lookahead
-        if tok.isspace():           # white space; continue to next token
+        tok = toks[0]       # one lookahead
+        if tok.isspace():   # white space; continue to next token
             toks.pop(0)
-            tok = toks[0]
+            tok = toks[0]   # guaranteed that there is next token, because of tokenize function
 
         if tok=='*' or tok=='/':
             tok = toks.pop(0)
-            return Node(type='op', val=tok, left=factor, right=parse_term(toks))
-        elif tok=='+' or tok=='-':  # continue parsing expression
-            return factor
-        else:
-            raise IncorrectSyntax("Expected operation after factor", tok)
-    else:
+            return Node(typ='op', val=tok, right=parse_term(toks))
+
+def parse_term(toks):
+    factor = parse_factor(toks)
+    term_prime = parse_term_prime(toks)
+    if term_prime is None:
         return factor
+    term_prime.left = factor  # push subtree <factor>
+    return term_prime
+
+def parse_expr_prime(toks):
+    if len(toks)>0:
+        tok = toks[0]       # one lookahead
+        if tok.isspace():   # white space; continue to next token
+            toks.pop(0)
+            tok = toks[0]   # guaranteed that there is next token, because of tokenize function
+
+        if tok=='+' or tok=='-':
+            tok = toks.pop(0)
+            return Node(typ='op', val=tok, right=parse_expr(toks))
+        else:
+            raise IncorrectSyntax("Expected addition/subtraction after term", tok)
 
 def parse_expr(toks):
     term = parse_term(toks)
-    if len(toks)>0:
-        tok = toks[0]               # one lookahead
-        if tok.isspace():           # white space; continue to next token
-            toks.pop(0)
-            tok = toks[0]
-
-        if tok=='+' or tok=='-':  # one lookahead
-            tok = toks.pop(0)
-            return Node(type='op', val=tok, left=term, right=parse_expr(toks))
-    else:
+    expr_prime = parse_expr_prime(toks)
+    if expr_prime is None:
         return term
+    expr_prime.left = term  # push subtree <term>
+    return expr_prime
 ##########################################
 
 '''Helper function to replace white space with a single space in input string line
                     & change into mutable data type(list)'''
 def tokenize(str_line):
+    # there are no white space at both ends, and tokens are seperated by single space
     return list(' '.join(str_line.strip().split()))
 
 '''Parse the given input string line'''
